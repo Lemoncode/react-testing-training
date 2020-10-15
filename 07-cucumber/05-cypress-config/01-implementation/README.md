@@ -12,7 +12,32 @@ We will start from `00-boilerplate`.
 npm install
 ```
 
-- 
+- As we did with jest, we need a third party library to integrate cucumber with cypress. In this case this library is [cypress-cucumber-preprocessor](https://github.com/TheBrainFamily/cypress-cucumber-preprocessor):
+
+```bash
+npm install cypress-cucumber-preprocessor @types/cypress-cucumber-preprocessor --save-dev
+```
+
+- Configure it:
+
+_./cypress/plugins/index.ts_
+
+```javascript
+
+```
+
+_./cypress.json_
+
+```diff
+{
+  "baseUrl": "http://localhost:8080/#",
++ "testFiles": "**/*.feature",
++ "nonGlobalStepDefinitions": true
+}
+
+```
+
+> [Configuration](https://github.com/TheBrainFamily/cypress-cucumber-preprocessor#cypress-configuration)
 
 # About Basefactor + Lemoncode
 
