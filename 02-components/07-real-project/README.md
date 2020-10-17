@@ -32,19 +32,6 @@ describe("common/search-bar/search-bar.component specs", () => {
 
 - Let's render the component and check the input element:
 
-> If we try getByRole, we need something like:
-
-```javascript
-<>
-  <label htmlFor="inputId">Search</label>
-  <input id="inputId" type="text" />
-</>;
-
-screen.getByRole("textbox", { name: /search/i });
-```
-
-> [Textfield a11y](https://material-ui.com/components/text-fields/#accessibility)
-
 ### ./src/common/components/search-bar/search-bar.component.spec.tsx
 
 ```diff
@@ -66,9 +53,7 @@ describe('common/search-bar/search-bar.component specs', () => {
     // Act
 +   render(<SearchBarComponent {...props} />);
 
-+   const inputElement = screen.getByPlaceholderText(
-+     'test placeholder'
-+   ) as HTMLInputElement;
++   const inputElement = screen.getByRole('textbox') as HTMLInputElement;
 
     // Assert
 +   expect(inputElement).toBeInTheDocument();
@@ -77,8 +62,15 @@ describe('common/search-bar/search-bar.component specs', () => {
 });
 
 ```
+> [ARIA roles](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles)
+>
+> [Which query should I use?](https://testing-library.com/docs/guide-which-query)
 
-> [ARIA roles](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles) > [Which query should I use?](https://testing-library.com/docs/guide-which-query)
+- Another option is using:
+
+```javascript
+const inputElement = screen.getByPlaceholderText('test placeholder') as HTMLInputElement;
+```
 
 - Start test watch:
 
@@ -124,9 +116,7 @@ npm run test:watch search-bar
     // Act
     render(<SearchBarComponent {...props} />);
 
-    const inputElement = screen.getByPlaceholderText(
-      'test placeholder'
-    ) as HTMLInputElement;
+    const inputElement = screen.getByRole('textbox') as HTMLInputElement;
 +   const iconElement = screen.getByLabelText('Search icon');
 
     // Assert
@@ -161,7 +151,7 @@ import React from 'react';
 +   // Act
 +   render(<SearchBarComponent {...props} />);
 
-+   const inputElement = screen.getByPlaceholderText('test placeholder');
++   const inputElement = screen.getByRole('textbox');
 +   fireEvent.change(inputElement, { target: { value: 'new text search' } });
 
 +   // Assert
@@ -169,220 +159,6 @@ import React from 'react';
 + });
 ...
 
-```
-
-- Let's add `search-bar.hook` specs:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-```javascript
-import { renderHook } from "@testing-library/react-hooks";
-import { useSearchBar } from "./search-bar.hook";
-
-describe("common/components/search-bar/search-bar.hook specs", () => {
-  it('should return search text, onSearch method and filteredList when it feeds colors array and "name" field', () => {
-    // Arrange
-    // Act
-    // Assert
-  });
-});
-```
-
-- Let's implement first spec:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-```diff
-import { renderHook } from '@testing-library/react-hooks';
-import { useSearchBar } from './search-bar.hook';
-
-describe('common/components/search-bar/search-bar.hook specs', () => {
-  it('should return search text, onSearch method and filteredList when it feeds colors array and "name" field', () => {
-    // Arrange
-+   const colors = [
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ];
-
-    // Act
-+   const { result } = renderHook(() => useSearchBar(colors, ['name']));
-
-    // Assert
-+   expect(result.current.search).toEqual('');
-+   expect(result.current.onSearch).toEqual(expect.any(Function));
-+   expect(result.current.filteredList).toEqual([
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ]);
-  });
-});
-
-```
-
-- Testing `filteredList` when we calls `onSearch` with some color:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-> It's async because we are using useDebounce hook.
-
-```diff
-- import { renderHook } from '@testing-library/react-hooks';
-+ import { renderHook, act } from '@testing-library/react-hooks';
-import { useSearchBar } from './search-bar.hook';
-
-...
-
-+ it('should return filteredList with one element equals red when it calls onSearch method with "red" text', async () => {
-+   // Arrange
-+   const colors = [
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ];
-
-+   // Act
-+   const { result, waitForNextUpdate } = renderHook(() =>
-+     useSearchBar(colors, ['name'])
-+   );
-
-+   act(() => {
-+     result.current.onSearch('red');
-+   });
-
-+   await waitForNextUpdate();
-
-+   // Assert
-+   expect(result.current.search).toEqual('red');
-+   expect(result.current.filteredList).toEqual([{ id: 1, name: 'red' }]);
-+ });
-
-```
-
-- Testing it calls to `useDebounce` hook:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-> Care with: import * as commonHooks from 'common/hooks';
-> https://stackoverflow.com/questions/53162001/typeerror-during-jests-spyon-cannot-set-property-getrequest-of-object-which
-> https://github.com/babel/babel/issues/8363
-
-```diff
-import { renderHook, act } from '@testing-library/react-hooks';
-import { useSearchBar } from './search-bar.hook';
-+ import * as commonHooks from 'common/hooks/debounce.hook';
-...
-
-+ it('should calls useDebounce hook when it renders', () => {
-+   // Arrange
-+   const colors = [
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ];
-+   const debounceSearchStub = jest.spyOn(commonHooks, 'useDebounce');
-
-+   // Act
-+   renderHook(() => useSearchBar(colors, ['name']));
-
-+   // Assert
-+   expect(debounceSearchStub).toHaveBeenCalledWith('', 250);
-+ });
-  
-```
-
-- Testing `useDebounce` result:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-```diff
-...
-
-+ it('should return filteredList with one element equals blue when useDebounce return text equals "blue"', () => {
-+   // Arrange
-+   const colors = [
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ];
-+   const debounceSearchStub = jest
-+     .spyOn(commonHooks, 'useDebounce')
-+     .mockReturnValue('blue');
-
-+   // Act
-+   const { result } = renderHook(() => useSearchBar(colors, ['name']));
-
-+   // Assert
-+   expect(debounceSearchStub).toHaveBeenCalledWith('', 250);
-+   expect(result.current.search).toEqual('');
-+   expect(result.current.filteredList).toEqual([{ id: 2, name: 'blue' }]);
-+ });
-
-```
-
-- Testing it calls to `filterByText` method:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-```diff
-import { renderHook, act } from '@testing-library/react-hooks';
-import { useSearchBar } from './search-bar.hook';
-import * as commonHooks from 'common/hooks/debounce.hook';
-+ import * as filterHelpers from 'common/helpers/filter.helper';
-...
-
-+ it('should calls filterByText method when it renders', () => {
-+   // Arrange
-+   const colors = [
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ];
-+   const filterByTextStub = jest.spyOn(filterHelpers, 'filterByText');
-
-+   // Act
-+   renderHook(() => useSearchBar(colors, ['name']));
-
-+   // Assert
-+   expect(filterByTextStub).toHaveBeenCalledWith(colors, '', ['name']);
-+ });
-  
-```
-
-- Testing `filterByText` result:
-
-### ./src/common/components/search-bar/search-bar.hook.spec.tsx
-
-```diff
-...
-
-+ it('should return filteredList with two elements equals blue and green when filterByText return array with two elements blue and green', () => {
-+   // Arrange
-+   const colors = [
-+     { id: 1, name: 'red' },
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ];
-+   const filterByTextStub = jest
-+     .spyOn(filterHelpers, 'filterByText')
-+     .mockReturnValue([
-+       { id: 2, name: 'blue' },
-+       { id: 3, name: 'green' },
-+     ]);
-
-+   // Act
-+   const { result } = renderHook(() => useSearchBar(colors, ['name']));
-
-+   // Assert
-+   expect(filterByTextStub).toHaveBeenCalledWith(colors, '', ['name']);
-+   expect(result.current.search).toEqual('');
-+   expect(result.current.filteredList).toEqual([
-+     { id: 2, name: 'blue' },
-+     { id: 3, name: 'green' },
-+   ]);
-+ });
-  
 ```
 
 - Let's add specs to `./src/common/components/form/select`:
@@ -437,7 +213,7 @@ describe('common/components/form/select/select.component specs', () => {
     // Act
 +   render(<SelectComponent {...props} />);
     
-+   const selectElement = const selectElement = screen.getByLabelText('Test label');
++   const selectElement = screen.getByRole('button', { name: 'Test label' });
     // Assert
 +   expect(selectElement).toBeInTheDocument();
   });
@@ -469,7 +245,7 @@ import React from 'react';
 +   // Act
 +   render(<SelectComponent {...props} />);
 
-+   const selectElement = const selectElement = screen.getByLabelText('Test label');
++   const selectElement = screen.getByRole('button', { name: 'Test label' });
 +   fireEvent.click(selectElement);
 +   const menuElement = screen.getByRole('listbox');
 
@@ -513,7 +289,7 @@ import React from 'react';
     // Act
     render(<SelectComponent {...props} />);
 
-    const selectElement = const selectElement = screen.getByLabelText('Test label');
+    const selectElement = screen.getByRole('button', { name: 'Test label' });
 -   fireEvent.click(selectElement);
 +   expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     
@@ -550,7 +326,7 @@ import React from 'react';
 +   // Act
 +   render(<SelectComponent {...props} />);
 
-+   const selectElement = const selectElement = screen.getByLabelText('Test label');
++   const selectElement = screen.getByRole('button', { name: 'Test label' });
 
 +   userEvent.click(selectElement);
 +   const itemElementList = screen.getAllByRole('option');
@@ -565,6 +341,29 @@ import React from 'react';
 ```
 
 - Testing should update selected item when it clicks on third item using Formik:
+
+### ./src/common/components/form/select/select.component.spec.tsx
+
+```diff
+...
++ it('should update selected item when it clicks on third item using Formik', () => {
++   // Arrange
++   const props = {
++     items: [
++       { id: '1', name: 'Item 1' },
++       { id: '2', name: 'Item 2' },
++       { id: '3', name: 'Item 3' },
++     ] as Lookup[],
++     label: 'Test label',
++     name: 'selectedItem',
++   };
+
++   // Act
++   render(<SelectComponent {...props} />);
++ });
+```
+
+- Create `renderWithFormik`:
 
 ### ./src/common/components/form/select/select.component.spec.tsx
 
@@ -585,22 +384,13 @@ import { Lookup } from 'common/models';
 + });
 ...
 
-+ it('should update selected item when it clicks on third item using Formik', () => {
-+   // Arrange
-+   const props = {
-+     items: [
-+       { id: '1', name: 'Item 1' },
-+       { id: '2', name: 'Item 2' },
-+       { id: '3', name: 'Item 3' },
-+     ] as Lookup[],
-+     label: 'Test label',
-+     name: 'selectedItem',
-+   };
-
-+   // Act
+  it('should update selected item when it clicks on third item using Formik', () => {
+    ...
+    // Act
+-   render(<SelectComponent {...props} />);
 +   renderWithFormik(<SelectComponent {...props} />, { selectedItem: '1' });
 
-+   const selectElement = screen.getByLabelText('Test label');
++   const selectElement = screen.getByRole('button', { name: /Item 1/i });
 
 +   expect(selectElement.textContent).toEqual('Item 1');
 
@@ -610,7 +400,7 @@ import { Lookup } from 'common/models';
 
 +   // Assert
 +   expect(selectElement.textContent).toEqual('Item 3');
-+ });
+  });
 ```
 
 # About Basefactor + Lemoncode
