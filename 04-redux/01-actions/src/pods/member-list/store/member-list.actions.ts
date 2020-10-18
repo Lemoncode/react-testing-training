@@ -2,14 +2,14 @@ import { BaseAction } from 'common/models';
 import { Member } from '../api';
 import { actionIds } from './member-list.action-ids';
 
-type FetchMembersRequestAction = BaseAction<
+export type FetchMembersRequestAction = BaseAction<
   typeof actionIds.FETCH_MEMBERS_REQUEST
 >;
 export const fetchMembersRequest = (): FetchMembersRequestAction => ({
   type: actionIds.FETCH_MEMBERS_REQUEST,
 });
 
-type FetchMembersSuccessAction = BaseAction<
+export type FetchMembersSuccessAction = BaseAction<
   typeof actionIds.FETCH_MEMBERS_SUCCESS,
   Member[]
 >;
@@ -21,7 +21,7 @@ export const fetchMembersSuccess = (
   payload: members,
 });
 
-type FetchMembersErrorAction = BaseAction<
+export type FetchMembersErrorAction = BaseAction<
   typeof actionIds.FETCH_MEMBERS_ERROR,
   string
 >;

@@ -6,7 +6,7 @@ We will start from sample _01-actions_.
 
 Summary steps:
 
-- Add tests for `members/list/reducers/members` reducer
+- Add tests for member list reducer.
 
 # Steps to build it
 
@@ -28,12 +28,12 @@ Let's launch jest in watch mode to start the sample:
 npm run test:watch
 ```
 
-We will start creating a `members.spec.ts` file near to its implementation under `./src/pages/members/list/reducers` folder
+- We will start creating a `member-list.reducer.spec.ts`
 
-### **./src/pages/members/list/reducers/members.spec.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
-```ts
-describe('pages/members/list/reducers/members reducer tests', () => {
+```javascript
+describe('pods/member-list/store/member-list.reducer  tests', () => {
   it('', () => {
     // Arrange
     // Act
@@ -44,28 +44,28 @@ describe('pages/members/list/reducers/members reducer tests', () => {
 
 Redux reducers have a minimum of three executions. The first one is when the store is initialized and every reducer creates all chunks of the initial state (if initialState is not fed in `createStore` at the time of creating the store). Redux will launch a `@@INIT` action to initialize all reducers. So let's use that text as the first one:
 
-### **./src/pages/members/list/reducers/members.spec.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
 ```diff
-+ import { BaseAction } from '../../../../common/types';
-+ import { MembersAction } from '../actions';
-+ import { membersReducer, MembersState } from './members';
-+
-  describe('pages/members/list/reducers/members reducer tests', () => {
++ import { BaseAction } from 'common/models';
++ import { MemberListAction } from './member-list.actions';
++ import { membersReducer, MemberListState } from './member-list.reducer';
+
+  describe('pods/member-list/store/member-list.reducer  tests', () => {
 +   it('should return the expected state when initialized with undefined initial state', () => {
       // Arrange
 +     const action: BaseAction = {
 +       type: 'foo',
 +       payload: null,
 +     };
-+
-+     const initialState: MembersState = {
-+       members: [],
+
++     const initialState: MemberListState = {
++       list: [],
 +       serverError: null,
 +     };
 
       // Act
-+     const result = membersReducer(undefined, action as MembersAction);
++     const result = membersReducer(undefined, action as MemberListAction);
 
       // Assert
 +     expect(result).toEqual(initialState);
@@ -73,24 +73,21 @@ Redux reducers have a minimum of three executions. The first one is when the sto
   });
 ```
 
-Next we'll test the behavior when it receives an action with type FETCH_MEMBERS_SUCCESS. It should update `members` and reset `serverError`:
+- Next we'll test the behavior when it receives an action with type FETCH_MEMBERS_SUCCESS. It should update `members` and reset `serverError`:
 
-### **./src/pages/members/list/reducers/members.spec.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
 ```diff
 + import deepFreeze from 'deep-freeze';
-  import { BaseAction } from '../../../../common/types';
-+ import { Member } from '../../../../rest-api/model';
-  import { MembersAction } from '../actions';
-+ import { actionIds } from '../actions/actionIds';
-+ import { FetchMembersSuccessAction } from '../actions/fetchMembers';
-  import { membersReducer, MembersState } from './members';
+import { BaseAction } from 'common/models';
+- import { MemberListAction } from './member-list.actions';
++ import { MemberListAction, FetchMembersSuccessAction } from './member-list.actions';
++ import { actionIds } from './member-list.action-ids';
++ import { Member } from '../api';
+import { membersReducer, MembersState } from './members';
 
-  describe('pages/members/list/reducers/members reducer tests', () => {
-    it('should return the expected state when initialized with undefined initial state', () => {
-      ...
-    });
-+
+..
+
 +   it('should return the expected state when action type is FETCH_MEMBERS_SUCCESS', () => {
 +     // Arrange
 +     const members: Member[] = [{ id: 1, login: 'test name', avatar_url: 'test avatar' }];
@@ -98,42 +95,47 @@ Next we'll test the behavior when it receives an action with type FETCH_MEMBERS_
 +       type: actionIds.FETCH_MEMBERS_SUCCESS,
 +       payload: members,
 +     };
-+     const initialState: MembersState = deepFreeze({
-+       members: [],
++     const initialState: MemberListState = deepFreeze({
++       list: [],
 +       serverError: 'test error',
 +     });
-+
+
 +     // Act
 +     const result = membersReducer(initialState, action);
-+
+
 +     // Assert
-+     expect(result.members).toBe(members);
++     expect(result.list).toBe(members);
 +     expect(result.serverError).toBeNull();
 +   });
   });
 ```
 
-Let's see how `deep-freeze` helps us to check immutability. Let's refactor `handleFetchMembersSuccess` case and mutate the state:
+- Let's see how `deep-freeze` helps us to check immutability. Let's refactor `handleFetchMembersSuccess` case and mutate the state:
 
-### **./src/pages/members/list/reducers/members.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
 ```diff
-- const handleFetchMembersSuccess = (_state: MembersState, members: Member[]): MembersState => ({
--   members,
+...
+- const handleFetchMembersSuccess = (_state: MemberListState, members: Member[]): MemberListState => ({
+-   list: members,
 -   serverError: null,
 - });
-+ const handleFetchMembersSuccess = (state: MembersState, members: Member[]): MembersState => {
-+   for (const member of members) {
-+     state.members.push(member);
-+   }
++ const handleFetchMembersSuccess = (
++   _state: MemberListState,
++   members: Member[]
++ ): MemberListState => {
++   members.forEach((member) => {
++     _state.list.push(member);
++   });
++
 +   return {
-+     members: state.members,
++     list: _state.list,
 +     serverError: null,
 +   };
 + };
 ```
 
-We'll see an error like this one:
+- We'll see an error like this one:
 
 ```
 TypeError: Cannot add property 0, object is not extensible
@@ -142,55 +144,53 @@ TypeError: Cannot add property 0, object is not extensible
 
 That's because `deep-freeze` makes all properties of our `state` object non writable. When we try to mutate a property an error is thrown. Let's change back the implementation to get all tests happy.
 
-### **./src/pages/members/list/reducers/members.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
 ```diff
-- const handleFetchMembersSuccess = (state: MembersState, members: Member[]): MembersState => {
--   for (const member of members) {
--     state.members.push(member);
--   }
+- const handleFetchMembersSuccess = (
+-   _state: MemberListState,
+-   members: Member[]
+- ): MemberListState => {
+-   members.forEach((member) => {
+-     _state.list.push(member);
+-   });
+-
 -   return {
--     members: state.members,
+-     list: _state.list,
 -     serverError: null,
 -   };
 - };
-+ const handleFetchMembersSuccess = (_state: MembersState, members: Member[]): MembersState => ({
-+   members,
+
++ const handleFetchMembersSuccess = (_state: MemberListState, members: Member[]): MemberListState => ({
++   list: members,
 +   serverError: null,
 + });
 ```
 
 Let's add the proper test when an action with type `FETCH_MEMBERS_ERROR`: it should add to the state the error message from payload:
 
-### **./src/pages/members/list/reducers/members.spec.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
 ```diff
-  import deepFreeze from 'deep-freeze';
-  import { BaseAction } from '../../../../common/types';
-  import { Member } from '../../../../rest-api/model';
-  import { MembersAction } from '../actions';
-  import { actionIds } from '../actions/actionIds';
-- import { FetchMembersSuccessAction } from '../actions/fetchMembers';
-+ import { FetchMembersErrorAction, FetchMembersSuccessAction } from '../actions/fetchMembers';
-  import { membersReducer, MembersState } from './members';
+import { BaseAction } from 'common/models';
+import {
+  MemberListAction,
+  FetchMembersSuccessAction,
++ FetchMembersErrorAction,
+} from './member-list.actions';
+import { actionIds } from './member-list.action-ids';
+import { Member } from '../api';
+import { membersReducer, MemberListState } from './member-list.reducer';
 
-  describe('pages/members/list/reducers/members reducer tests', () => {
-    it('should return the expected state when initialized with undefined initial state', () => {
-      ...
-    });
-
-    it('should return the expected state when action type is FETCH_MEMBERS_SUCCESS', () => {
-      ...
-    });
-+
+...
 +   it('should return the expected state when action type is FETCH_MEMBERS_ERROR', () => {
 +     // Arrange
 +     const action: FetchMembersErrorAction = {
 +       type: actionIds.FETCH_MEMBERS_ERROR,
 +       payload: 'test error',
 +     };
-+     const initialState: MembersState = deepFreeze({
-+       members: [],
++     const initialState: MemberListState = deepFreeze({
++       list: [],
 +       serverError: null,
 +     });
 
@@ -198,52 +198,32 @@ Let's add the proper test when an action with type `FETCH_MEMBERS_ERROR`: it sho
 +     const result = membersReducer(initialState, action);
 
 +     // Assert
-+     expect(result.members).toBe(initialState.members);
++     expect(result.list).toBe(initialState.list);
 +     expect(result.serverError).toBe('test error');
 +   });
   });
 ```
 
-Finally, le'll test how it behaves when an action with an arbitrary type is passed. It should return the state without modifications:
+- Finally, we'll test how it behaves when an action with an arbitrary type is passed. It should return the state without modifications:
 
-### **./src/pages/members/list/reducers/members.spec.ts**
+_./src/pods/member-list/store/member-list.reducer.spec.ts_
 
 ```diff
-  import deepFreeze from 'deep-freeze';
-  import { BaseAction } from '../../../../common/types';
-  import { Member } from '../../../../rest-api/model';
-  import { MembersAction } from '../actions';
-  import { actionIds } from '../actions/actionIds';
-  import { FetchMembersErrorAction, FetchMembersSuccessAction } from '../actions/fetchMembers';
-  import { membersReducer, MembersState } from './members';
-
-  describe('pages/members/list/reducers/members reducer tests', () => {
-    it('should return the expected state when initialized with undefined initial state', () => {
-      ...
-    });
-
-    it('should return the expected state when action type is FETCH_MEMBERS_SUCCESS', () => {
-      ...
-    });
-
-    it('should return the expected state when action type is FETCH_MEMBERS_ERROR', () => {
-      ...
-    });
-+
+...
 +   it('should return the current state if action type is not known', () => {
 +     // Arrange
 +     const action: BaseAction = {
 +       type: 'foo',
 +       payload: null,
 +     };
-+     const initialState: MembersState = deepFreeze({
-+       members: [],
++     const initialState: MemberListState = deepFreeze({
++       list: [],
 +       serverError: null,
 +     });
-+
+
 +     // Act
-+     const result = membersReducer(initialState, action as MembersAction);
-+
++     const result = membersReducer(initialState, action as MemberListAction);
+
 +     // Assert
 +     expect(result).toBe(initialState);
 +   });

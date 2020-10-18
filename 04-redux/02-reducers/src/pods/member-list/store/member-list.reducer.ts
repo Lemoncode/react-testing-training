@@ -14,7 +14,10 @@ const createInitialState = (): MemberListState => ({
 });
 
 type MembersReducer = Reducer<MemberListState, MemberListAction>;
-export const membersReducer: MembersReducer = (state = createInitialState(), action) => {
+export const membersReducer: MembersReducer = (
+  state = createInitialState(),
+  action
+) => {
   switch (action.type) {
     case actionIds.FETCH_MEMBERS_SUCCESS:
       return handleFetchMembersSuccess(state, action.payload);
@@ -25,12 +28,18 @@ export const membersReducer: MembersReducer = (state = createInitialState(), act
   }
 };
 
-const handleFetchMembersSuccess = (_state: MemberListState, members: Member[]): MemberListState => ({
+const handleFetchMembersSuccess = (
+  _state: MemberListState,
+  members: Member[]
+): MemberListState => ({
   list: members,
   serverError: null,
 });
 
-const handleFetchMembersError = (state: MemberListState, error: string): MemberListState => ({
+const handleFetchMembersError = (
+  state: MemberListState,
+  error: string
+): MemberListState => ({
   ...state,
   serverError: error,
 });
