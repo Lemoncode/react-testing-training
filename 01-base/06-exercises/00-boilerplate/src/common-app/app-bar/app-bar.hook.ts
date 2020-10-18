@@ -1,11 +1,6 @@
 import React from 'react';
 
-export const useMenu = (): {
-  isOpen: boolean;
-  menuElement: HTMLElement;
-  onOpenMenu: (event: React.MouseEvent<HTMLElement>) => void;
-  onCloseMenu: () => void;
-} => {
+export const useMenu = () => {
   const [isOpen, setOpen] = React.useState(false);
   const [menuElement, setMenuElement] = React.useState<HTMLElement>(null);
 
