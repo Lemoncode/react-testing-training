@@ -10,7 +10,6 @@ export const SpinnerComponent: React.FunctionComponent = () => {
     <Modal open={promiseInProgress} className={classes.modal}>
       <div className={classes.loaderContainer}>
         <Loader />
-        <h1>Test</h1>
       </div>
     </Modal>
   );
