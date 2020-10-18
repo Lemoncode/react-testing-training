@@ -2,8 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 import { State } from 'core/store';
-import { MemberListAction, fetchMembersRequest } from './store';
-import { mapMemberListModelToVM } from './member-list.mappers';
+import { MemberListAction, fetchMembersRequest, getMemberListVm, getServerError } from './store';
 import { Member } from './member-list.vm';
 import { MemberListComponent } from './member-list.component';
 
@@ -22,8 +21,8 @@ const InnerMemberListContainer: React.FunctionComponent<Props> = React.memo((pro
 });
 
 const mapStateToProps = (state: State) => ({
-  memberList: mapMemberListModelToVM(state.memberList.list),
-  serverError: state.memberList.serverError,
+  memberList: getMemberListVm(state),
+  serverError: getServerError(state),
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<MemberListAction>) => ({
