@@ -6,9 +6,7 @@ We will start from sample _02-reducers_.
 
 Summary steps:
 
-- Add tests for `pages/members/list/sagas/fetchMembersSaga.ts` saga
-- Add tests for `pages/members/list/sagas/index.ts` root module saga
-- Add tests for `pages/sagas.ts` root saga
+- Add tests for `fetchMembersSaga.ts` saga
 
 # Steps to build it
 
@@ -18,26 +16,24 @@ Summary steps:
 npm install
 ```
 
-A saga is nothing but a generator. So in order to test a saga we can test it as a normal generator. The good news when testing sagas is that all `redux-saga` effects are declarative and just descriptions of what is need to be done.
+- A saga is nothing but a generator. So in order to test a saga we can test it as a normal generator. The good news when testing sagas is that all `redux-saga` effects are declarative and just descriptions of what is need to be done.
 
-## Adding tests for `pages/members/list/sagas/fetchMembersSaga.ts`
+- Let's create the `fetchMembersSaga.spec.ts` file near to its implementation under `./src/pages/members/list/sagas`:
 
-Let's create the `fetchMembersSaga.spec.ts` file near to its implementation under `./src/pages/members/list/sagas`:
+_./src/pods/member-list/store/member-list.sagas.spec.ts_
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
-
-```ts
-describe('pages/members/sagas/fetchMembers sagas', () => {});
+```javascript
+describe('pods/member-list/store/member-list.sagas specs', () => {});
 ```
 
-The first saga we test will be the watcher one. Let's add a separated spec for that one:
+- The first saga we test will be the watcher one. Let's add a separated spec for that one:
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
+_./src/pods/member-list/store/member-list.sagas.spec.ts_
 
 ```diff
-+ import { fetchMembersSaga, watchFetchMembersRequest } from './fetchMembersSaga';
++ import { watchFetchMembersRequest } from './member-list.sagas';
 
-  describe('pages/members/sagas/fetchMembers sagas', () => {
+  describe('pods/member-list/store/member-list.sagas specs', () => {
 +   describe('watchFetchMembersRequest', () => {
 +     it('should wait for expected action and execute the expected worker', () => {
 +       // Arrange
@@ -50,295 +46,209 @@ The first saga we test will be the watcher one. Let's add a separated spec for t
   });
 ```
 
-In order to test that generator we need to create an instance of `watchFetchMembersRequest` and compare results of
+- In order to test that generator we need to create an instance of `watchFetchMembersRequest` and compare results of
 `instance.next().value` with what we expect:
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
+_./src/pods/member-list/store/member-list.sagas.spec.ts_
 
 ```diff
 + import { takeLatest } from 'redux-saga/effects';
-+ import { actionIds } from '../actions/actionIds';
-  import { fetchMembersSaga, watchFetchMembersRequest } from './fetchMembersSaga';
++ import { actionIds } from './member-list.action-ids';
+- import { watchFetchMembersRequest } from './member-list.sagas';
++ import { watchFetchMembersRequest, fetchMembersSaga } from './member-list.sagas';
 
-  describe('pages/members/sagas/fetchMembers sagas', () => {
-    describe('watchFetchMembersRequest', () => {
-      it('should wait for expected action and execute the expected worker', () => {
-        // Arrange
-+       const saga = watchFetchMembersRequest();
+describe('pods/member-list/store/member-list.sagas specs', () => {
+  describe('watchFetchMembersRequest', () => {
+    it('should wait for expected action and execute the expected worker', () => {
+      // Arrange
 
-        // Act
-+       const result = saga.next();
+      // Act
++     const saga = watchFetchMembersRequest();
++     const result = saga.next();
 
-        // Assert
-+       expect(result.value).toEqual(takeLatest(actionIds.FETCH_MEMBERS_REQUEST, fetchMembersSaga));
-      });
+      // Assert
++     expect(result.value).toEqual(takeLatest(actionIds.FETCH_MEMBERS_REQUEST, fetchMembersSaga));
     });
   });
+});
 ```
 
-Next we'll test the worker one: `fetchMembersSaga`. As we can see it has some `yield` so we'll need to get the value and assert.
+- Next we'll test the worker one: `fetchMembersSaga`. As we can see it has some `yield` so we'll need to get the value and assert.
 Let's start with the case when the API call is successful and return a members list:
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
+_./src/pods/member-list/store/member-list.sagas.spec.ts_
 
 ```diff
 - import { takeLatest } from 'redux-saga/effects';
-+ import { call, put, takeLatest } from 'redux-saga/effects';
-+ import { fetchMembers } from '../../../../rest-api/api/member';
-+ import { Member } from '../../../../rest-api/model';
-  import { actionIds } from '../actions/actionIds';
-+ import { FetchMembersRequestAction, fetchMembersSuccess } from '../actions/fetchMembers';
-  import { fetchMembersSaga, watchFetchMembersRequest } from './fetchMembersSaga';
++ import { takeLatest, call, put } from 'redux-saga/effects';
+import { actionIds } from './member-list.action-ids';
++ import { Member, fetchMembers } from '../api';
++ import { fetchMembersSuccess } from './member-list.actions';
+import { watchFetchMembersRequest, fetchMembersSaga } from './member-list.sagas';
 
-  describe('pages/members/sagas/fetchMembers sagas', () => {
-    describe('watchFetchMembersRequest', () => {
-      ...
-    });
-+
-+   describe('fetchMembersSaga', () => {
-+     it('should put fetchMembersSuccess with given members when API call is succesful', () => {
-+       // Arrange
-+       const fetchMembersRequest: FetchMembersRequestAction = {
-+         type: actionIds.FETCH_MEMBERS_REQUEST,
-+         payload: null,
-+       };
-+       const saga = fetchMembersSaga(fetchMembersRequest);
-+       const members: Member[] = [{ id: 1, login: 'test login', avatar_url: 'test avatar' }];
-
-+       // Act & Assert
-+       expect(saga.next().value).toEqual(call(fetchMembers));
-+       expect(saga.next(members).value).toEqual(put(fetchMembersSuccess(members)));
-+     });
-    });
-  });
+...
++ describe('fetchMembersSaga', () => {
++   it('should put fetchMembersSuccess with given members when API call is succesful', () => {
++     // Arrange
++     const members: Member[] = [
++       { id: 1, login: 'test login', avatar_url: 'test avatar' },
++     ];
+     
++     // Act
++     const saga = fetchMembersSaga();
+     
++     // Assert
++     expect(saga.next().value).toEqual(call(fetchMembers));
++     expect(saga.next(members).value).toEqual(
++       put(fetchMembersSuccess(members))
++     );
++   });
++ });
 ```
 
-Now we'll test the non happy path when API returns an error:
+- We'll explore another way to test sagas. This approximation can be used only when a saga ends and is not stuck in blocking calls in a infinite loop and it will give us all dispatched actions to the store via `put` effect. Let's create the folder `src/common/test` that will be used to store all our test utilities. Now we'll create a `sagas-helpers.ts` file:
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
+_./src/common/test/sagas-helpers.ts_
 
-```diff
-  import { call, put, takeLatest } from 'redux-saga/effects';
-  import { fetchMembers } from '../../../../rest-api/api/member';
-  import { Member } from '../../../../rest-api/model';
-  import { actionIds } from '../actions/actionIds';
-- import { FetchMembersRequestAction, fetchMembersSuccess } from '../actions/fetchMembers';
-+ import { fetchMembersError, FetchMembersRequestAction, fetchMembersSuccess } from '../actions/fetchMembers';
-  import { fetchMembersSaga, watchFetchMembersRequest } from './fetchMembersSaga';
+```javascript
+import * as reduxSaga from 'redux-saga';
+import { Saga } from 'redux-saga';
+import { BaseAction } from 'common/models';
 
-  describe('pages/members/sagas/fetchMembers sagas', () => {
-    describe('watchFetchMembersRequest', () => {
-      ...
-    });
-
-    describe('fetchMembersSaga', () => {
-      it('should put fetchMembersSuccess with givne members when API call is succesful', () => {
-        ...
-      });
-+
-+     it('should put fetchMembersError with given error when API call is not succesful', () => {
-+       // Arrange
-+       const fetchMembersRequest: FetchMembersRequestAction = {
-+         type: actionIds.FETCH_MEMBERS_REQUEST,
-+         payload: null,
-+       };
-+       const saga = fetchMembersSaga(fetchMembersRequest);
-+       const thrownError = new Error('test error');
-
-+       // Act & Assert
-+       expect(saga.next().value).toEqual(call(fetchMembers));
-+       expect(saga.throw(thrownError).value).toEqual(put(fetchMembersError(thrownError.message)));
-+     });
-    });
-  });
-```
-
-We'll explore another way to test sagas. This approximation can be used only when a saga ends and is not stuck in blocking calls in a infinite loop and it will give us all dispatched actions to the store via `put` effect. Let's create the folder `src/common/test` that will be used to store all our test utilities. Now we'll create a `getDispatchedActionsFromSaga.ts` file:
-
-### **./src/common/test/getDispatchedActionsFromSaga.ts**
-
-```ts
-import { runSaga, Saga } from 'redux-saga';
-import { BaseAction } from '../types';
-
-export async function getDispatchedActionsFromSaga<S>(saga: Saga, initialAction: BaseAction, state?: S) {
+export const runSaga = async <S>(
+  saga: Saga,
+  initialAction: BaseAction,
+  state?: S
+) => {
   const dispatchedActions = [];
 
-  await runSaga(
-    {
-      dispatch: (action) => dispatchedActions.push(action),
-      getState: () => state,
-    },
-    saga,
-    initialAction
-  ).toPromise();
+  await reduxSaga
+    .runSaga(
+      {
+        dispatch: (action) => dispatchedActions.push(action),
+        getState: () => state,
+      },
+      saga,
+      initialAction
+    )
+    .toPromise();
 
   return dispatchedActions;
-}
+};
+
 ```
 
-Let's add a barrel for our `test` folder:
+> [Reference](https://dev.to/phil/the-best-way-to-test-redux-sagas-4hib)
 
-### **./src/common/test/index.ts**
+- Let's add a barrel for our `test` folder:
 
-```ts
-export * from './getDispatchedActionsFromSaga';
+_./src/common/test/index.ts_
+
+```javascript
+export * from './sagas-helpers';
+
 ```
 
-Since using this approximation the saga will be launched as in real app we need to mock the API call.
+- Since using this approximation the saga will be launched as in real app we need to mock the API call.
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
+_./src/pods/member-list/store/member-list.sagas.spec.ts_
 
 ```diff
-  import { call, put, takeLatest } from 'redux-saga/effects';
-+ import { getDispatchedActionsFromSaga } from '../../../../common/test';
-+ import * as api from '../../../../rest-api/api/member';
-- import { fetchMembers } from '../../../../rest-api/api/member';
-  import { Member } from '../../../../rest-api/model';
-+ import { MembersAction } from '../actions';
-  import { actionIds } from '../actions/actionIds';
-  import { fetchMembersError, FetchMembersRequestAction, fetchMembersSuccess } from '../actions/fetchMembers';
-  import { fetchMembersSaga, watchFetchMembersRequest } from './fetchMembersSaga';
+- import { takeLatest, call, put } from 'redux-saga/effects';
++ import { takeLatest } from 'redux-saga/effects';
++ import { runSaga } from 'common/test';
+import { actionIds } from './member-list.action-ids';
+- import { Member, fetchMembers } from '../api';
++ import { Member } from '../api';
++ import * as api from '../api/member-list.api';
+- import { fetchMembersSuccess } from './member-list.actions';
++ import { fetchMembersRequest } from './member-list.actions';
+import {
+  watchFetchMembersRequest,
+  fetchMembersSaga,
+} from './member-list.sagas';
 
-  describe('pages/members/sagas/fetchMembers sagas', () => {
-    describe('watchFetchMembersRequest', () => {
-      ...
+...
+-   it('should put fetchMembersSuccess with given members when API call is succesful', () => {
++   it('should put fetchMembersSuccess with given members when API call is succesful', async() => {
+      // Arrange
+      const members: Member[] = [
+        { id: 1, login: 'test login', avatar_url: 'test avatar' },
+      ];
++     const initialAction = fetchMembersRequest();
++     const fetchMembersStub = jest
++       .spyOn(api, 'fetchMembers')
++       .mockResolvedValue(members);
+
+      // Act
+-     const saga = fetchMembersSaga();
++     const result = await runSaga(fetchMembersSaga, initialAction);
+
+      // Assert
+-     expect(saga.next().value).toEqual(call(fetchMembers));
+-     expect(saga.next(members).value).toEqual(
+-       put(fetchMembersSuccess(members))
+-     );
++     expect(fetchMembersStub).toHaveBeenCalled();
++     expect(result).toEqual([
++       {
++         type: actionIds.FETCH_MEMBERS_SUCCESS,
++         payload: members,
++       },
++     ]);
     });
 
-    describe('fetchMembersSaga', () => {
-      it('should put fetchMembersSuccess with givne members when API call is succesful', () => {
-        ...
--       expect(saga.next().value).toEqual(call(fetchMembers));
-+       expect(saga.next().value).toEqual(call(api.fetchMembers));
-        ...
-      });
-
-      it('should put fetchMembersError with given error when API call is not succesful', () => {
-        ...
--       expect(saga.next().value).toEqual(call(fetchMembers));
-+       expect(saga.next().value).toEqual(call(api.fetchMembers));
-        ...
-      });
-+
-+     it('should dispatch the expected actions if API call is successful', async () => {
-+       // Arrange
-+       const fetchMembersRequest: FetchMembersRequestAction = {
-+         type: actionIds.FETCH_MEMBERS_REQUEST,
-+         payload: null,
-+       };
-+       const members: Member[] = [{ id: 1, login: 'test login', avatar_url: 'test avatar' }];
-+       jest.spyOn(api, 'fetchMembers').mockImplementation(() => Promise.resolve(members));
-+       const expectedActions: MembersAction[] = [fetchMembersSuccess(members)];
-
-+       // Act
-+       const dispatchedActions = await getDispatchedActionsFromSaga(fetchMembersSaga, fetchMembersRequest);
-
-+       // Assert
-+       expect(dispatchedActions).toEqual(expectedActions);
-+     });
-    });
-  });
 ```
 
-Finally let's use the same approximation for a failed API call:
+- Resolve alias in specs:
 
-### **./src/pages/members/sagas/fetchMembersSaga.spec.ts**
+_./config/test/jest.js_
 
 ```diff
-  import { call, put, takeLatest } from 'redux-saga/effects';
-  import { getDispatchedActionsFromSaga } from '../../../../common/test';
-  import * as api from '../../../../rest-api/api/member';
-  import { Member } from '../../../../rest-api/model';
-  import { MembersAction } from '../actions';
-  import { actionIds } from '../actions/actionIds';
-  import { fetchMembersError, FetchMembersRequestAction, fetchMembersSuccess } from '../actions/fetchMembers';
-  import { fetchMembersSaga, watchFetchMembersRequest } from './fetchMembersSaga';
+module.exports = {
+  rootDir: '../../',
+  preset: 'ts-jest',
+  restoreMocks: true,
+  setupFilesAfterEnv: ['<rootDir>/config/test/setup-after.ts'],
++ moduleDirectories: ['<rootDir>/src', 'node_modules'],
+};
 
-  describe('pages/members/sagas/fetchMembers sagas', () => {
-    describe('watchFetchMembersRequest', () => {
-      it('should wait for expected action and execute the expected worker', () => {
-        ...
-      });
-    });
+```
+> [Reference](https://jestjs.io/docs/en/configuration#moduledirectories-arraystring)
 
-    describe('fetchMembersSaga', () => {
-      it('should put fetchMembersSuccess with givne members when API call is succesful', () => {
-        ...
-      });
+- Now we'll test the non happy path when API returns an error:
 
-      it('should put fetchMembersError with given error when API call is not succesful', () => {
-        ...
-      });
+_./src/pods/member-list/store/member-list.sagas.spec.ts_
 
-      it('should dispatch the expected actions if API call is successful', async () => {
-        ...
-      });
-+
-+     it('should dispatch the expected actions if API call is not successful', async () => {
-+       // Arrange
-+       const fetchMembersRequest: FetchMembersRequestAction = {
-+         type: actionIds.FETCH_MEMBERS_REQUEST,
-+         payload: null,
-+       };
-+       const thrownError = new Error('test error');
-+       jest.spyOn(api, 'fetchMembers').mockImplementation(() => Promise.reject(thrownError));
-+       const expectedActions: MembersAction[] = [fetchMembersError(thrownError.message)];
-+
-+       // Act
-+       const dispatchedActions = await getDispatchedActionsFromSaga(fetchMembersSaga, fetchMembersRequest);
-+
-+       // Assert
-+       expect(dispatchedActions).toEqual(expectedActions);
-+     });
-    });
-  });
+```diff
+...
++   it('should put fetchMembersError with given error when API call is not succesful', async () => {
++     // Arrange
++     const axiosError = {
++       response: {
++         statusText: 'test error',
++       },
++     };
++     const initialAction = fetchMembersRequest();
++     const fetchMembersStub = jest
++       .spyOn(api, 'fetchMembers')
++       .mockRejectedValue(axiosError);
+
++     // Act
++     const result = await runSaga(fetchMembersSaga, initialAction);
+
++     // Assert
++     expect(fetchMembersStub).toHaveBeenCalled();
++     expect(result).toEqual([
++       {
++         type: actionIds.FETCH_MEMBERS_ERROR,
++         payload: 'test error',
++       },
++     ]);
++   });
 ```
 
-## Adding tests for `pages/members/list/sagas/index.ts`
-
-Let's create a `index.spec.ts` file near the implementation under `./src/pages/members/list/sagas`. This test should be pretty straightforward, checking that our root saga runs our `watchFetchMembersRequest` watcher:
-
-### **./src/pages/members/sagas/index.spec.ts**
-
-```ts
-import { watchFetchMembersRequest } from './fetchMembersSaga';
-import { membersRootSaga } from './index';
-
-describe('pages/members/list/membersRootSaga', () => {
-  it('should spawn watchFetchMembersRequest saga', () => {
-    // Arrange
-    const saga = membersRootSaga();
-
-    // Act
-    const result = saga.next();
-
-    // Assert
-    expect(result.value).toEqual(watchFetchMembersRequest());
-  });
-});
-```
-
-Finally we could test our top level saga to check it calls membersRootSaga:
-
-### **./src/pages/sagas.ts**
-
-```ts
-import { membersRootSaga } from './members';
-import { rootSaga } from './sagas';
-
-describe('pages/sagas.ts', () => {
-  it('should call expected modules root sagas', () => {
-    // Arrange
-    const saga = rootSaga();
-
-    // Act
-    const result = saga.next();
-
-    // Assert
-    expect(result.value).toEqual(membersRootSaga());
-  });
-});
-```
+> [More info](https://redux-saga.js.org/docs/advanced/Testing.html)
 
 # About Basefactor + Lemoncode
 
