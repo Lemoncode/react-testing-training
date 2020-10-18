@@ -2,7 +2,7 @@
 
 In this example we will configure continuos integration and run tests.
 
-We will start from `00-boilerplate`.
+We will start from `05-containers`.
 
 # Steps
 

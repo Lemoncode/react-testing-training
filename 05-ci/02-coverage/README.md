@@ -2,12 +2,9 @@
 
 In this sample we are going to add test coverage to our project.
 
-Summary steps:
+We will start from `01-github-actions`.
 
-- Add a new command inside package.json's scripts sections.
-- Create more sophisticated configuration.
-
-## Steps to build it
+# Steps
 
 - `npm install` to install previous sample packages:
 
@@ -15,18 +12,15 @@ Summary steps:
 npm install
 ```
 
-To get an up and working code coverage a simple script can be added to package.json to tell jest we need collect coverage report from our tests. That is, applying the `--coverage` flag:
+- To get an up and working code coverage a simple script can be added to package.json to tell jest we need collect coverage report from our tests. That is, applying the `--coverage` flag:
 
-### **./package.json**
+_./package.json_
 
 ```diff
   "scripts": {
-    "start": "webpack-dev-server --config ./config/webpack/dev.js",
-    "prebuild": "rimraf dist",
-    "build": "webpack --config ./config/webpack/prod.js",
-    "test": "jest -c ./config/test/jest.json --verbose",
--   "test:watch": "npm run test -- --watchAll -i"
-+   "test:watch": "npm run test -- --watchAll -i",
+    ...
+    "test": "jest -c ./config/test/jest.js --verbose",
+    "test:watch": "npm run test -- --watchAll -i"
 +   "pretest:coverage": "rimraf coverage",
 +   "test:coverage": "npm run test -- --coverage"
   },
