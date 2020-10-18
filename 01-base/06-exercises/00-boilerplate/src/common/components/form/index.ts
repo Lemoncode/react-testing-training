@@ -1,4 +1,4 @@
 export * from './form.component';
-export * from './textfield';
+export * from './text-field';
 export * from './checkbox';
 export * from './select';
