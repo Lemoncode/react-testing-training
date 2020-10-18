@@ -37,24 +37,27 @@ _./src/pods/member-list/member-list.container.spec.tsx_
 
 ```diff
 import React from 'react';
-import { render } from '@testing-library/react';
-import { MemberListPageContainer } from './pageContainer';
+import { render, screen, within } from '@testing-library/react';
+import { MemberListContainer } from './member-list.container';
 
 describe('pods/member-list/member-list.container specs', () => {
 - it('', () => {
 + it('should render empty array when it feeds initial state with empty member list', () => {
     // Arrange
-+   render(<MemberListContainer />);
 
     // Act
-+   const memberList = screen.queryAllByRole('row');
++   render(<MemberListContainer />);
++   const tableBodyElement = screen.getAllByRole('rowgroup');
++   const memberList = within(tableBodyElement[1]).queryAllByRole('row');
 
     // Assert
-+   expect(memberList).toEqual([]);
++   expect(memberList).toHaveLength(0);
   });
 });
 
 ```
+
+> [Table ARIA roles](https://www.w3.org/TR/wai-aria-practices/examples/table/table.html)
 
 - Notice that we have and error. We need to provide the `redux store`:
 
@@ -62,62 +65,55 @@ _./src/pods/member-list/member-list.container.spec.tsx_
 
 ```diff
 import React from 'react';
-import { render } from '@testing-library/react';
-import { MemberListPageContainer } from './pageContainer';
++ import { Provider } from 'react-redux';
++ import { createStore } from 'redux';
+- import { render, screen, within } from '@testing-library/react';
++ import { render, screen, within, RenderOptions } from '@testing-library/react';
++ import { State, rootReducers } from 'core/store';
+import { MemberListContainer } from './member-list.container';
+
++ interface Options extends RenderOptions {
++   redux?: {
++     reducer: any;
++     initialState: any;
++     store?: any;
++   };
++ }
+
++ const renderWithRedux = (component, options: Options) => {
++   const { redux, ...restOptions } = options;
++   const reducer = Boolean(redux?.reducer) ? redux.reducer : (state) => state;
++   const initialState = Boolean(redux?.initialState) ? redux.initialState : {};
++   const store = Boolean(redux?.store)
++     ? redux.store
++     : createStore(reducer, initialState);
+
++   return {
++     ...render(<Provider store={store}>{component}</Provider>, restOptions),
++     store,
++   };
++ };
 
 describe('pods/member-list/member-list.container specs', () => {
   it('should render empty array when it feeds initial state with empty member list', () => {
     // Arrange
-    render(<MemberListContainer />);
-
-    // Act
-    const memberList = screen.queryAllByRole('row');
-
-    // Assert
-    expect(memberList).toEqual([]);
-  });
-});
-
-import React from 'react';
-+ import { createStore } from 'redux';
-+ import { Provider } from 'react-redux';
-import { render } from '@testing-library/react';
-+ import { membersReducer } from './reducers';
-+ import { State } from '../../reducers';
-import { MemberListPageContainer } from './pageContainer';
-
-+ const renderWithRedux = (
-+   component,
-+   { initialState = {}, reducer, store = createStore(reducer, initialState) }
-+ ) => ({
-+   ...render(<Provider store={store}>{component}</Provider>),
-+   store,
-+ });
-
-describe('pods/member-list/member-list.container specs', () => {
-  it('should render empty table when it feeds initial state', () => {
-    // Arrange
 +   const initialState: State = {
-+     members: {
-+       members: [],
++     memberList: {
++       list: [],
 +       serverError: null,
 +     },
 +   };
 
     // Act
--   const { queryAllByTestId } = render(<MemberListPageContainer />);
-+   const { queryAllByTestId } = renderWithRedux(
-+     <MemberListPageContainer />,
-+     {
-+       initialState,
-+       reducer: membersReducer,
-+     }
-+   );
-
-    const memberElements = queryAllByTestId('member');
+-   render(<MemberListContainer />);
++   renderWithRedux(<MemberListContainer />, {
++     redux: { initialState, reducer: rootReducers },
++   });
+    const tableBodyElement = screen.getAllByRole('rowgroup');
+    const memberList = within(tableBodyElement[1]).queryAllByRole('row');
 
     // Assert
-    expect(memberElements).toHaveLength(0);
+    expect(memberList).toHaveLength(0);
   });
 });
 
@@ -130,29 +126,31 @@ _./src/pods/member-list/member-list.container.spec.tsx_
 ```diff
 ...
 
-+ it('should render one item when it feeds initial state with one item', () => {
++ it('should render one item when it feeds initial state with one member', () => {
 +   // Arrange
 +   const initialState: State = {
-+     members: {
-+       members: [
-+         { id: 1, login: 'test login 1', avatar_url: 'test avatar_url 1' },
++     memberList: {
++       list: [
++         {
++           id: 1,
++           login: 'test-login-1',
++           avatar_url: 'test-avatar-1',
++         },
 +       ],
 +       serverError: null,
 +     },
 +   };
 
 +   // Act
-+   const { queryAllByTestId } = renderWithRedux(<MemberListPageContainer />, {
-+     initialState,
-+     reducer: membersReducer,
++   renderWithRedux(<MemberListContainer />, {
++     redux: { initialState, reducer: rootReducers },
 +   });
-
-+   const memberElements = queryAllByTestId('member');
++   const tableBodyElement = screen.getAllByRole('rowgroup');
++   const memberList = within(tableBodyElement[1]).queryAllByRole('row');
 
 +   // Assert
-+   expect(memberElements).toHaveLength(1);
++   expect(memberList).toHaveLength(1);
 + });
-
 ```
 
 - should display zero items when it has two items on state and serverError equals "has-error":
@@ -162,30 +160,32 @@ _./src/pods/member-list/member-list.container.spec.tsx_
 ```diff
 ...
 
-+ it('should display zero items when it has two items on state and serverError equals "has-error"', () => {
++ it('should render empty array when it feeds initial state with one member and serverError equals "test error"', () => {
 +   // Arrange
 +   const initialState: State = {
-+     members: {
-+       members: [
-+         { id: 1, login: 'test login 1', avatar_url: 'test avatar_url 1' },
-+         { id: 2, login: 'test login 2', avatar_url: 'test avatar_url 2' },
++     memberList: {
++       list: [
++         {
++           id: 1,
++           login: 'test-login-1',
++           avatar_url: 'test-avatar-1',
++         },
 +       ],
-+       serverError: 'has-error',
++       serverError: 'test error',
 +     },
 +   };
 
 +   // Act
-+   const { queryAllByTestId } = renderWithRedux(<MemberListPageContainer />, {
-+     initialState,
-+     reducer: membersReducer,
++   renderWithRedux(<MemberListContainer />, {
++     redux: { initialState, reducer: rootReducers },
 +   });
-
-+   const memberElements = queryAllByTestId('member');
++   const tableElement = screen.queryByRole('table');
++   const serverErrorElement = screen.getByText('test error');
 
 +   // Assert
-+   expect(memberElements).toHaveLength(0);
++   expect(tableElement).not.toBeInTheDocument();
++   expect(serverErrorElement).toBeInTheDocument();
 + });
-
 ```
 
 - should call fetchMembersRequest when it mounts the component
@@ -194,35 +194,32 @@ _./src/pods/member-list/member-list.container.spec.tsx_
 
 ```diff
 import React from 'react';
-import { createStore } from 'redux';
 import { Provider } from 'react-redux';
-import { render } from '@testing-library/react';
-import { membersReducer } from './reducers';
-import { State } from '../../reducers';
-+ import * as actions from './actions/fetchMembers';
-import { MemberListPageContainer } from './pageContainer';
+import { createStore } from 'redux';
+import { render, screen, within, RenderOptions } from '@testing-library/react';
+import { State, rootReducers } from 'core/store';
++ import * as actions from './store/member-list.actions';
+import { MemberListContainer } from './member-list.container';
 
 ...
 
 + it('should call fetchMembersRequest when it mounts the component', () => {
 +   // Arrange
 +   const initialState: State = {
-+     members: {
-+       members: [],
++     memberList: {
++       list: [],
 +       serverError: null,
 +     },
 +   };
-
-+   const fetchMembersRequest = jest.spyOn(actions, 'fetchMembersRequest');
++   const stub = jest.spyOn(actions, 'fetchMembersRequest');
 
 +   // Act
-+   const {} = renderWithRedux(<MemberListPageContainer />, {
-+     initialState,
-+     reducer: membersReducer,
++   renderWithRedux(<MemberListContainer />, {
++     redux: { initialState, reducer: rootReducers },
 +   });
 
 +   // Assert
-+   expect(fetchMembersRequest).toHaveBeenCalled();
++   expect(stub).toHaveBeenCalled();
 + });
 
 ```
