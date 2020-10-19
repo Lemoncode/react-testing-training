@@ -38,7 +38,7 @@ export const getMembers = (): Promise<Member[]> =>
 +   .catch((error: AxiosError) => {
 +     switch (error.response.status) {
 +       case 403:
-+         throw 'Too much Github API calls!';
++         throw 'Too many Github API calls!';
 +       case 503:
 +         throw 'Unavailable service';
 +     }
@@ -218,7 +218,7 @@ import { Member } from './api-model';
 import { getMembers } from './api';
 ...
 
-+ it('should throw an error with "Too much Github API calls!" when it rejects the request with 403 status code', async () => {
++ it('should throw an error with "Too many Github API calls!" when it rejects the request with 403 status code', async () => {
 +   // Arrange
 +   const getStub = jest.spyOn(Axios, 'get').mockRejectedValue({
 +     response: {
@@ -234,7 +234,7 @@ import { getMembers } from './api';
 +     expect(getStub).toHaveBeenCalledWith(
 +       'https://api.github.com/orgs/lemoncode/members'
 +     );
-+     expect(error).toEqual('Too much Github API calls!');
++     expect(error).toEqual('Too many Github API calls!');
 +   }
 + });
 ...
