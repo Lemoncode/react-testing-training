@@ -25,22 +25,22 @@ export const RouterComponent: React.FunctionComponent = () => {
           path={routes.submoduleList}
           component={SubmoduleListScene}
         />
-        <Route
+        <AuthRouterComponent
           exact={true}
           path={routes.projects}
           component={ProjectListScene}
         />
-        <Route
+        <AuthRouterComponent
           exact={true}
           path={routes.employees}
           component={EmployeeListScene}
         />
-        <Route
+        <AuthRouterComponent
           exact={true}
           path={routes.editProject()}
           component={ProjectScene}
         />
-        <Route
+        <AuthRouterComponent
           exact={true}
           path={routes.editEmployee()}
           component={EmployeeScene}
