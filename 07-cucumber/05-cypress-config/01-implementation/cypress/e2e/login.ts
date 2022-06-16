@@ -4,7 +4,7 @@ import {
   But,
   And,
   Then,
-} from 'cypress-cucumber-preprocessor/steps';
+} from '@badeball/cypress-cucumber-preprocessor';
 
 let user, password;
 

@@ -12,83 +12,72 @@ We will start from `00-boilerplate`.
 npm install
 ```
 
-- As we did with jest, we need a third party library to integrate cucumber with cypress. In this case this library is [cypress-cucumber-preprocessor](https://github.com/TheBrainFamily/cypress-cucumber-preprocessor):
+- As we did with jest, we need a third party library to integrate cucumber with cypress. In this case this library is [cypress-cucumber-preprocessor](https://github.com/badeball/cypress-cucumber-preprocessor):
 
 ```bash
-npm install cypress-cucumber-preprocessor @types/cypress-cucumber-preprocessor @cypress/webpack-preprocessor --save-dev
+npm install @badeball/cypress-cucumber-preprocessor @cypress/webpack-preprocessor
 ```
 
-- Configure it:
+- Configure it (here an [official example](https://github.com/badeball/cypress-cucumber-preprocessor/tree/master/examples/webpack)):
 
-_./cypress/webpack.config.js_
-
-```javascript
-module.exports = {
-  resolve: {
-    extensions: ['.js', '.ts'],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        loader: 'babel-loader',
-      },
-      {
-        test: /\.feature$/,
-        use: [
-          {
-            loader: 'cypress-cucumber-preprocessor/loader',
-          },
-        ],
-      },
-    ],
-  },
-};
-
-```
-
-_./cypress/plugins/index.ts_
-
-```javascript
-import webpack from '@cypress/webpack-preprocessor';
-import webpackOptions from '../webpack.config';
-
-export default (on, config) => {
-  const options = {
-    webpackOptions,
-  };
-  on('file:preprocessor', webpack(options));
-};
-
-```
-
-_./cypress.json_
+_./cypress.config.ts_
 
 ```diff
-{
-  "baseUrl": "http://localhost:8080/#",
-+ "testFiles": "**/*.feature"
-}
+import { defineConfig } from 'cypress';
++ import webpack from '@cypress/webpack-preprocessor';
++ import { addCucumberPreprocessorPlugin } from '@badeball/cypress-cucumber-preprocessor';
 
-```
++ export async function setupNodeEvents(
++   on: Cypress.PluginEvents,
++   config: Cypress.PluginConfigOptions
++ ): Promise<Cypress.PluginConfigOptions> {
++   await addCucumberPreprocessorPlugin(on, config);
 
-_./package.json_
-
-```diff
-...
-+ "cypress-cucumber-preprocessor": {
-+   "stepDefinitions": "cypress/integration"
++   on(
++     'file:preprocessor',
++     webpack({
++       webpackOptions: {
++         resolve: {
++           extensions: ['.ts', '.js'],
++         },
++         module: {
++           rules: [
++             {
++               test: /\.ts$/,
++               exclude: /node_modules/,
++               loader: 'babel-loader',
++             },
++             {
++               test: /\.feature$/,
++               use: [
++                 {
++                   loader: '@badeball/cypress-cucumber-preprocessor/webpack',
++                   options: config,
++                 },
++               ],
++             },
++           ],
++         },
++       },
++     })
++   );
++   return config;
 + }
-}
-```
 
-> [Configuration](https://github.com/TheBrainFamily/cypress-cucumber-preprocessor#cypress-configuration)
-> [TypeScript Support](https://github.com/TheBrainFamily/cypress-cucumber-preprocessor#typescript-support)
+export default defineConfig({
+  e2e: {
+    baseUrl: 'http://localhost:8080/#',
+    supportFile: 'cypress/support/index.ts',
++   specPattern: '**/*.feature',
++   setupNodeEvents,
+  },
+});
+
+```
 
 - Let's add the first feature:
 
-_./cypress/integration/login.feature_
+_./cypress/e2e/login.feature_
 
 ```gherkin
 Feature: Login Page
@@ -102,7 +91,7 @@ Feature: Login Page
 
 ```
 
-_./cypress/integration/login.ts_
+_./cypress/e2e/login.ts_
 
 ```javascript
 import {
@@ -111,7 +100,7 @@ import {
   But,
   And,
   Then,
-} from 'cypress-cucumber-preprocessor/steps';
+} from '@badeball/cypress-cucumber-preprocessor';
 
 let user, password;
 
@@ -149,9 +138,15 @@ Then('I should see an alert with a message', () => {
 
 > Important the file name should be the same as feature.
 
+- Running it:
+
+```bash
+npm run test:e2e
+```
+
 - Let's add a second scenario:
 
-_./cypress/integration/login.feature_
+_./cypress/e2e/login.feature_
 
 ```diff
 ...
@@ -166,7 +161,7 @@ _./cypress/integration/login.feature_
 
 - Implement steps:
 
-_./cypress/integration/login.ts_
+_./cypress/e2e/login.ts_
 
 ```diff
 ...
