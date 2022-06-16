@@ -1,21 +1,26 @@
 import React from 'react';
-import { hot } from 'react-hot-loader/root';
 import { ThemeProviderComponent } from 'core/theme';
 import { RouterComponent } from 'core/router';
 import { SessionProvider } from 'core/session-context';
 
-const App: React.FunctionComponent = () => {
-  return <RouterComponent />;
-};
-
-const AppProviders: React.FunctionComponent = () => {
+interface AppProvidersProps {
+  children: React.ReactNode;
+}
+const AppProviders: React.FC<AppProvidersProps> = (props) => {
+  const { children } = props;
   return (
     <ThemeProviderComponent>
-      <SessionProvider>
-        <App />
-      </SessionProvider>
+      <SessionProvider>{children}</SessionProvider>
     </ThemeProviderComponent>
   );
 };
 
-export default hot(AppProviders);
+const App: React.FC = () => {
+  return (
+    <AppProviders>
+      <RouterComponent />
+    </AppProviders>
+  );
+};
+
+export default App;
