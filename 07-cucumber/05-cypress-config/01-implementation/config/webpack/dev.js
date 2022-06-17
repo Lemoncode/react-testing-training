@@ -3,8 +3,6 @@ const Dotenv = require('dotenv-webpack');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const base = require('./base');
 
-const hotReloadingEntries = ['react-hot-loader/patch'];
-
 module.exports = merge(base, {
   mode: 'development',
   devtool: 'eval-source-map',
