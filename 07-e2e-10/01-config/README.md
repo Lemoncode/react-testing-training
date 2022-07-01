@@ -40,25 +40,62 @@ npm install cypress --save-dev
 npm run test:e2e
 ```
 
-- Cypress creates for us a folder `cypress` and `cypress.json`:
+Opens an electron application, select `E2E tests`, `cypress` shows to us what folders and files has created for us, scroll down and click on `Continue`. 
 
+Now `cypress` ask us what browser to use, the selection will depend on our O.S. select `Chrome`. 
+
+After this a new `cypress Chrome` window is open now we can select: `Scaffold example specs` or `Create new empty spec`
+
+- Cypress creates for us a folder `cypress` and `cypress.config.ts`:
+
+  - **downloads**
+  - **e2e**
   - **fixtures**
-  - **integration**
-  - **plugins**
-  - **screenshots**
   - **support**
 
-- And a `cypress.json` for configuration.
+- And a `cypress.config.ts` for configuration.
 
-- Let's remove all folders, and add our first test:
+```ts
+import { defineConfig } from "cypress";
 
-### ./cypress/integration/login.spec.js
+export default defineConfig({
+  e2e: {
+    setupNodeEvents(on, config) {
+      // implement node event listeners here
+    },
+  },
+});
+
+```
+
+- Let's remove `fixtures/example.json`, `support/commands.ts` and clear `support/e2e.ts` file content.
+
+> We will use `support/e2e.ts`
+
+### ./cypress/e2e/login.spec.js
 
 ```javascript
 describe('Login specs', () => {
   it('visit the login page', () => {
     cy.visit('http://localhost:8080');
   });
+});
+```
+
+- Update specPattern (by default is `cypress/e2e/**/*.cy.{js,jsx,ts,tsx}`):
+
+### ./cypress.config.ts
+
+```diff
+import { defineConfig } from "cypress";
+
+export default defineConfig({
+  e2e: {
+-   setupNodeEvents(on, config) {
+-     // implement node event listeners here
+-   },
++   specPattern: 'cypress/e2e/**/*.spec.{js,jsx,ts,tsx}',
+  },
 });
 ```
 
@@ -75,20 +112,24 @@ describe('Login specs', () => {
   },
 ```
 
-- So far so good, we can add the base app url in `cypress.json` to avoid repeat it in whole tests:
+- So far so good, we can add the base app url in `cypress.config.ys` to avoid repeat it in whole tests:
 
-### ./cypress.json
+### ./cypress.config.ts
 
 ```diff
-- {}
-+ {
-+   "baseUrl": "http://localhost:8080/#"
-+ }
+import { defineConfig } from "cypress";
+
+export default defineConfig({
+  e2e: {
++   baseUrl: 'http://localhost:8080/#',
+    specPattern: 'cypress/e2e/**/*.spec.{js,jsx,ts,tsx}'
+  },
+});
 ```
 
 > You can see more info [here](https://docs.cypress.io/guides/references/configuration.html#Options)
 
-### ./cypress/integration/login.spec.js
+### ./cypress/e2e/login.spec.js
 
 ```diff
 describe('Login specs', () => {
@@ -102,27 +143,20 @@ describe('Login specs', () => {
 
 - Could we work with Typescript? If we rename spec to `.ts`:
 
-_./cypress/integration/login.spec.js_ -> _./cypress/integration/login.spec.ts_
+_./cypress/e2e/login.spec.js_ -> _./cypress/e2e/login.spec.ts_
 
-- Let's add a `tsconfig.json` file to support it:
+- For now, it's not neccessary but advisable to add the `tsconfig.json` file inside cypress folder:
 
 ### ./cypress/tsconfig.json
 
 ```json
 {
   "compilerOptions": {
-    "strict": true,
-    "baseUrl": "../node_modules",
     "target": "es5",
     "lib": ["es5", "dom"],
-    "esModuleInterop": true,
-    "noImplicitAny": false,
-    "allowJs": true,
-    "types": ["cypress"]
+    "types": ["cypress", "node"]
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["**/*.ts"]
 }
 
 ```
@@ -131,7 +165,7 @@ _./cypress/integration/login.spec.js_ -> _./cypress/integration/login.spec.ts_
 
 - Now it's fully supported. Let's try another spec:
 
-### ./cypress/integration/login.spec.ts
+### ./cypress/e2e/login.spec.ts
 
 ```diff
 describe('Login specs', () => {
