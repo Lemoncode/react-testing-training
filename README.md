@@ -1,5 +1,9 @@
 # react-testing-training
 
+## References
+
+[Writing Good Gherkin 101](https://automationpanda.com/2017/01/30/bdd-101-writing-good-gherkin/)
+
 # About Basefactor + Lemoncode
 
 We are an innovating team of Javascript experts, passionate about turning your ideas into robust products.

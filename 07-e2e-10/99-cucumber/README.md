@@ -115,7 +115,23 @@ Then('User is able to successfully login to the Website', () => {
 });
 ```
 
+- If we run the tests by using `npm run test:e2e` we will get an error related with target transformations, we can solve it by updating `./cypress/tsconfig.json`
 
+### ./cypress/tsconfig.json
+
+```diff
+{
+  "compilerOptions": {
+-   "target": "es5",
++   "target": "es6",
+-   "lib": ["es5", "dom"],
++   "lib": ["es6", "dom"],
+    "types": ["cypress", "node"]
+  },
+  "include": ["**/*.ts"]
+}
+
+```
 
 # About Basefactor + Lemoncode
 

@@ -8,4 +8,4 @@ Feature: Login
         Then User is able to successfully login to the Website
         Examples:
             | username | password |
-            | Admin    | admin123 |
+            | admin    | test     |
