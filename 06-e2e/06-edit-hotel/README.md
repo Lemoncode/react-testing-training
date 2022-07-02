@@ -14,7 +14,7 @@ npm install
 
 - To edit an hotel we need to visit `hotels` and click on edit button:
 
-### ./cypress/integration/hotel-edit.spec.ts
+### ./cypress/e2e/hotel-edit.spec.ts
 
 ```javascript
 describe('Hotel edit specs', () => {
@@ -44,7 +44,7 @@ describe('Hotel edit specs', () => {
 
 - Add spec:
 
-### ./cypress/integration/hotel-edit.spec.ts
+### ./cypress/e2e/hotel-edit.spec.ts
 
 ```diff
 ...
@@ -53,8 +53,8 @@ describe('Hotel edit specs', () => {
 
     // Act
 +   cy.loadAndVisit('/api/hotels', '/hotel-collection');
-+   cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
-+     buttons[1].click();
++   cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
++     $buttons[1].click();
 +   });
 
     // Assert
@@ -63,9 +63,12 @@ describe('Hotel edit specs', () => {
 
 ```
 
+> Since cypress v10 $ prefix in elements is required. If it is not added the spec may fail.
+> [Official docs](https://docs.cypress.io/api/commands/then)
+
 - Add update hotel spec:
 
-### ./cypress/integration/hotel-edit.spec.ts
+### ./cypress/e2e/hotel-edit.spec.ts
 
 ```diff
 ...
@@ -75,8 +78,8 @@ describe('Hotel edit specs', () => {
 +   // Act
 +   cy.loadAndVisit('/api/hotels', '/hotel-collection');
 
-+   cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
-+     buttons[1].click();
++   cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
++     $buttons[1].click();
 +   });
 
 +   cy.findByLabelText('Name').clear().type('Updated hotel two');
@@ -88,9 +91,9 @@ describe('Hotel edit specs', () => {
 + });
 ```
 
-- The previous spec could works or not, due to we are not waiting to be resolved the get hotel request. If we change network to `Slow 3G` on `Chrome options` to simulate it, we will need do something like:
+- The previous spec could works or not, due to we are not waiting to be resolved the get hotel request. If we change network to `Fast 3G` on `Chrome options` to simulate it, we will need do something like:
 
-### ./cypress/integration/hotel-edit.spec.ts
+### ./cypress/e2e/hotel-edit.spec.ts
 
 ```diff
 ...
@@ -100,13 +103,14 @@ describe('Hotel edit specs', () => {
     // Act
     cy.loadAndVisit('/api/hotels', '/hotel-collection');
 
-+   cy.route('GET', '/api/hotels/2').as('loadHotel');
++   cy.intercept('GET', '/api/hotels/2').as('loadHotel');
 
-    cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
-      buttons[1].click();
+    cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
+      $buttons[1].click();
     });
 
 +   cy.wait('@loadHotel');
++   cy.findByLabelText('Name').should('not.have.value', '');
 
     cy.findByLabelText('Name').clear().type('Updated hotel two');
 
@@ -117,6 +121,9 @@ describe('Hotel edit specs', () => {
     cy.findByText('Updated hotel two');
   });
 ```
+
+> Notice: some this has to wait until it has some value.
+> [Wait default timeouts](https://docs.cypress.io/api/commands/wait#Timeouts)
 
 - Refactor command:
 
@@ -133,15 +140,16 @@ Cypress.Commands.add(
   'loadAndVisit',
 - (apiPath: string, routePath: string, fixture?: string) => {
 + (visitUrl: string, resources: Resource[], callbackAfterVisit?: () => void) => {
-    cy.server();
 -   Boolean(fixture)
--     ? cy.route('GET', apiPath, fixture).as('load')
--     : cy.route('GET', apiPath).as('load');
+-     ? cy.intercept('GET', apiPath, { fixture }).as('load')
+-     : cy.intercept('GET', apiPath).as('load');
 +   const aliasList = resources.map((resource, index) => {
 +     const alias = resource.alias || `load-${index}`;
 +     Boolean(resource.fixture)
-+       ? cy.route('GET', resource.path, resource.fixture).as(alias)
-+       : cy.route('GET', resource.path).as(alias);
++       ? cy
++           .intercept('GET', resource.path, { fixture: resource.fixture })
++           .as(alias)
++       : cy.intercept('GET', resource.path).as(alias);
 
 +     return alias;
 +   });
@@ -152,12 +160,10 @@ Cypress.Commands.add(
 +     callbackAfterVisit();
 +   }
 
--   return cy.wait('@load');
+-   cy.wait('@load');
 +   aliasList.forEach((alias) => {
 +     cy.wait(`@${alias}`);
 +   });
-
-+   return cy;
   }
 );
 
@@ -191,7 +197,7 @@ declare namespace Cypress {
 
 - Update specs:
 
-### ./cypress/integration/hotel-edit.spec.ts
+### ./cypress/e2e/hotel-edit.spec.ts
 
 ```diff
 ...
@@ -202,8 +208,8 @@ declare namespace Cypress {
 -   cy.loadAndVisit('/api/hotels', '/hotel-collection');
 +   cy.loadAndVisit('/hotel-collection', [{ path: '/api/hotels' }]);
 
-    cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
-      buttons[1].click();
+    cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
+      $buttons[1].click();
     });
 
     // Assert
@@ -217,21 +223,27 @@ declare namespace Cypress {
 -   cy.loadAndVisit('/api/hotels', '/hotel-collection');
 +   cy.loadAndVisit(
 +     '/hotel-collection',
-+     [{ path: '/api/hotels', alias: 'loadHotels' }, { path: '/api/hotels/2' }],
++     [
++       { path: '/api/hotels', alias: 'loadHotels' },
++       { path: '/api/hotels/2' },
++       { path: '/api/cities' },
++     ],
 +     () => {
-+       cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
-+         buttons[1].click();
++       cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
++         $buttons[1].click();
 +       });
 +     }
 +   );
 
--   cy.route('GET', '/api/hotels/2').as('loadHotel');
+-   cy.intercept('GET', '/api/hotels/2').as('loadHotel');
 
--   cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
--     buttons[1].click();
+-   cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
+-     $buttons[1].click();
 -   });
 
 -   cy.wait('@loadHotel');
+
+    cy.findByLabelText('Name').should('not.have.value', '');
 
     cy.findByLabelText('Name').clear().type('Updated hotel two');
 
@@ -244,7 +256,7 @@ declare namespace Cypress {
   });
 ```
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 ...
@@ -274,9 +286,9 @@ declare namespace Cypress {
     // Arrange
 
     // Act
--   cy.loadAndVisit('/api/hotels', '/hotel-collection', 'fixture:hotels');
+-   cy.loadAndVisit('/api/hotels', '/hotel-collection', 'hotels.json');
 +   cy.loadAndVisit('/hotel-collection', [
-+     { path: '/api/hotels', fixture: 'fixture:hotels' },
++     { path: '/api/hotels', fixture: 'hotels.json' },
 +   ]);
 
     // Assert
