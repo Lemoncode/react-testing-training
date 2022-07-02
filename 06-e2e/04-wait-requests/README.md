@@ -36,14 +36,15 @@ export const getHotelCollection = async (): Promise<HotelEntityApi[]> => {
 
 - Now, it's failing due to cypress timeout, so we need to refactor it:
 
+> Press run all specs again.
+
 ### ./cypress/integration/hotel-collection.spec.ts
 
 ```diff
   it('should fetch two hotels when visit /hotel-collection url', () => {
     // Arrange
-    cy.server(); // Start the server to change request behaviour
--   cy.route('GET', '/api/hotels', 'fixture:hotels');
-+   cy.route('GET', '/api/hotels', 'fixture:hotels').as('fetchHotels');
+-   cy.intercept('GET', '/api/hotels', { fixture: 'hotels.json' });
++   cy.intercept('GET', '/api/hotels', { fixture: 'hotels.json' }).as('fetchHotels');
 
     // Act
     cy.visit('/hotel-collection');
@@ -62,8 +63,7 @@ export const getHotelCollection = async (): Promise<HotelEntityApi[]> => {
 ```diff
   it('should fetch hotel list and show it in screen when visit /hotel-collection url', () => {
     // Arrange
-+   cy.server();
-+   cy.route('GET', '/api/hotels').as('fetchHotels');
++   cy.intercept('GET', '/api/hotels').as('fetchHotels');
 
     // Act
     cy.visit('/hotel-collection');
@@ -75,8 +75,7 @@ export const getHotelCollection = async (): Promise<HotelEntityApi[]> => {
 
   it('should fetch hotel list greater than 0 when visit /hotel-collection url', () => {
     // Arrange
-+   cy.server();
-+   cy.route('GET', '/api/hotels').as('fetchHotels');
++   cy.intercept('GET', '/api/hotels').as('fetchHotels');
 
     // Act
     cy.visit('/hotel-collection');
@@ -99,7 +98,7 @@ const url = '/api/hotels';
 
 export const getHotelCollection = async (): Promise<HotelEntityApi[]> => {
 - const promise = new Promise<HotelEntityApi[]>((resolve) => {
--   Axios.get(url).then(({ data }) => setTimeout(() => resolve(data), 4000));
+-   Axios.get(url).then(({ data }) => setTimeout(() => resolve(data), 3000));
 - });
 - return promise;
 + const { data } = await Axios.get<HotelEntityApi[]>(url);
