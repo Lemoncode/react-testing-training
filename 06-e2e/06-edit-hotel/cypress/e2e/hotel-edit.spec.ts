@@ -2,7 +2,7 @@ describe('Hotel edit specs', () => {
     it('should navigate to second hotel when click on edit second hotel', () => {
         // Arrange
         // Act
-        cy.loadAndVisit('/api/hotels', '/hotel-collection');
+        cy.loadAndVisit('/hotel-collection', [{ path: '/api/hotels' }]);
         cy.findAllByRole('button', { name: 'Edit hotel' })
             .then(($buttons) => {
                 $buttons[1].click();
@@ -16,15 +16,24 @@ describe('Hotel edit specs', () => {
         // Arrange
 
         // Act
-        cy.loadAndVisit('/api/hotels', '/hotel-collection');
+        cy.loadAndVisit(
+            '/hotel-collection',
+            [
+                { path: '/api/hotels', alias: 'loadHotels' },
+                { path: '/api/hotels/2' },
+                { path: '/api/cities' },
+            ],
+            () => {
+                cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
+                    $buttons[1].click();
+                });
+            }
+        );
 
-        cy.intercept('GET', '/api/hotels/2').as('loadHotel');
+        // cy.intercept('GET', '/api/hotels/2').as('loadHotel');
 
-        cy.findAllByRole('button', { name: 'Edit hotel' }).then(($buttons) => {
-            $buttons[1].click();
-        });
 
-        cy.wait('@loadHotel');
+        // cy.wait('@loadHotel');
         cy.findByLabelText('Name').should('not.have.value', '');
 
         cy.findByLabelText('Name').clear().type('Updated hotel two');
@@ -32,7 +41,7 @@ describe('Hotel edit specs', () => {
         cy.findByRole('button', { name: 'Save' }).click();
 
         // Assert
-        cy.wait('@load');
+        cy.wait('@loadHotels');
         cy.findByText('Updated hotel two');
     });
 });

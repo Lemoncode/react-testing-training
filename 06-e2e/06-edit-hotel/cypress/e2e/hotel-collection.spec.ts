@@ -3,7 +3,7 @@ describe('Hotel collection specs', () => {
         // Arrange
 
         // Act
-        cy.loadAndVisit('/api/hotels', '/hotel-collection');
+        cy.loadAndVisit('/hotel-collection', [{ path: '/api/hotels' }]);
 
         // Assert
         cy.findAllByRole('listitem').should('have.length', 10);
@@ -14,7 +14,7 @@ describe('Hotel collection specs', () => {
         // Arrange
 
         // Act
-        cy.loadAndVisit('/api/hotels', '/hotel-collection');
+        cy.loadAndVisit('/hotel-collection', [{ path: '/api/hotels' }]);
 
         // Assert
         cy.findAllByRole('listitem').should('have.length.greaterThan', 0);
@@ -24,7 +24,7 @@ describe('Hotel collection specs', () => {
         // Arrange
 
         // Act
-        cy.loadAndVisit('/api/hotels', '/hotel-collection', 'hotels.json');
+        cy.loadAndVisit('/hotel-collection', [{ path: '/api/hotels', fixture: 'hotels.json' }]);
 
         // Assert
         cy.findAllByRole('listitem').should('have.length', 2);
