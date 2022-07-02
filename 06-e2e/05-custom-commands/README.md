@@ -18,15 +18,16 @@ npm install
 
 ```javascript
 Cypress.Commands.add('loadAndVisit', () => {
-  cy.server();
-  cy.route('GET', '/api/hotels').as('fetchHotels');
+  cy.intercept('GET', '/api/hotels').as('fetchHotels');
   cy.visit('/hotel-collection');
 
-  return cy.wait('@fetchHotels');
+  cy.wait('@fetchHotels');
 });
-```
 
-### ./cypress/support/index.ts
+```
+> Note: we will fix typings errors adding a d.ts file
+
+### ./cypress/support/e2e.ts
 
 ```diff
 import '@testing-library/cypress/add-commands';
@@ -35,14 +36,13 @@ import '@testing-library/cypress/add-commands';
 
 - Use it:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 ...
   it('should fetch hotel list and show it in screen when visit /hotel-collection url', () => {
     // Arrange
--   cy.server();
--   cy.route('GET', '/api/hotels').as('fetchHotels');
+-   cy.intercept('GET', '/api/hotels').as('fetchHotels');
 
     // Act
 -   cy.visit('/hotel-collection');
@@ -92,14 +92,13 @@ declare namespace Cypress {
 
 - Update specs:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 ...
 it('should fetch hotel list greater than 0 when visit /hotel-collection url', () => {
     // Arrange
--   cy.server();
--   cy.route('GET', '/api/hotels').as('fetchHotels');
+-   cy.intercept('GET', '/api/hotels').as('fetchHotels');
 
     // Act
 -   cy.visit('/hotel-collection');
@@ -120,16 +119,15 @@ it('should fetch hotel list greater than 0 when visit /hotel-collection url', ()
 + Cypress.Commands.add(
 +   'loadAndVisit',
 +   (apiPath: string, routePath: string, fixture?: string) => {
-  cy.server();
-- cy.route('GET', '/api/hotels').as('fetchHotels');
+- cy.intercept('GET', '/api/hotels').as('fetchHotels');
 + Boolean(fixture)
-+     ? cy.route('GET', apiPath, fixture).as('load')
-+     : cy.route('GET', apiPath).as('load');
++     ? cy.intercept('GET', apiPath, { fixture }).as('load')
++     : cy.intercept('GET', apiPath).as('load');
 - cy.visit('/hotel-collection');
 + cy.visit(routePath);
 
-- return cy.wait('@fetchHotels');
-+ return cy.wait('@load');
+- cy.wait('@fetchHotels');
++ cy.wait('@load');
 });
 
 ```
@@ -154,7 +152,7 @@ declare namespace Cypress {
 
 - Update it:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 ...
@@ -182,12 +180,11 @@ declare namespace Cypress {
 
   it('should fetch two hotels when visit /hotel-collection url', () => {
     // Arrange
--   cy.server(); // Start the server to change request behaviour
--   cy.route('GET', '/api/hotels', 'fixture:hotels').as('fetchHotels');
+-   cy.intercept('GET', '/api/hotels', { fixture: 'hotels.json' }).as('fetchHotels');
 
     // Act
 -   cy.visit('/hotel-collection');
-+   cy.loadAndVisit('/api/hotels', '/hotel-collection', 'fixture:hotels');
++   cy.loadAndVisit('/api/hotels', '/hotel-collection', 'hotels.json');
 
     // Assert
 -   cy.wait('@fetchHotels');

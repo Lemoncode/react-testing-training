@@ -1,13 +1,18 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "baseUrl": "../node_modules",
-    "target": "es5",
-    "lib": ["es5", "dom"],
-    "esModuleInterop": true,
-    "noImplicitAny": false,
-    "allowJs": true,
-    "types": ["cypress", "@testing-library/cypress", "./support"]
-  },
-  "include": ["**/*.ts"]
+    "compilerOptions": {
+        "target": "es5",
+        "lib": [
+            "es5",
+            "dom"
+        ],
+        "types": [
+            "cypress",
+            "node",
+            "@testing-library/cypress",
+            "./suport"
+        ]
+    },
+    "include": [
+        "**/*.ts"
+    ]
 }
