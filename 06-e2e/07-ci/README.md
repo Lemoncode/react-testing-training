@@ -46,11 +46,12 @@ npm run test:e2e:ci
 
 ```
 
-- Maybe you notice that spec fail due to it's not properly clearing the input, we are not waintig to resolve cities before type on input:
+- Let's make a test fail:
 
 ### ./cypress/integration/hotel-edit.spec.ts
 
 ```diff
+...
   it('should update hotel name when it edits an hotel and click on save button', () => {
     // Arrange
 
@@ -60,9 +61,7 @@ npm run test:e2e:ci
       [
         { path: '/api/hotels', alias: 'loadHotels' },
         { path: '/api/hotels/2' },
-+       {
-+         path: '/api/cities',
-+       },
+        { path: '/api/cities' },
       ],
       () => {
         cy.findAllByRole('button', { name: 'Edit hotel' }).then((buttons) => {
@@ -71,13 +70,16 @@ npm run test:e2e:ci
       }
     );
 
+    cy.findByLabelText('Name').should('not.have.value', '');
+
     cy.findByLabelText('Name').clear().type('Updated hotel two');
 
     cy.findByRole('button', { name: 'Save' }).click();
 
     // Assert
     cy.wait('@loadHotels');
-    cy.findByText('Updated hotel two');
+-   cy.findByText('Updated hotel two');
++   cy.findByText('Updated hotel three');
   });
 ```
 
@@ -85,10 +87,10 @@ npm run test:e2e:ci
 
 ```bash
 git init
-git remote add origin https://github.com/...
+git remote add origin git@github.com...
 git add .
 git commit -m "add project with tests"
-git push --set-upstream origin master
+git push -u origin master
 ```
 
 - Create new branch on repository `feature/add-ci-file` and add ci config:
@@ -107,9 +109,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install
-        run: npm install
-      - name: Build
-        run: npm run build
+        run: npm ci
       - name: Tests e2e
         run: npm run test:e2e:ci
 ```
@@ -119,33 +119,10 @@ jobs:
 ```bash
 git add .
 git commit -m "add ci file"
-git push
+git push -u origin feature/add-ci-file
 ```
 
 - Create a pull request.
-
-- Check failing specs:
-
-### ./cypress/integration/hotel-edit.spec.ts
-
-```diff
-  it('should update hotel name when it edits an hotel and click on save button', () => {
-    ...
-
-    // Assert
-    cy.wait('@loadHotels');
--   cy.findByText('Updated hotel two');
-+   cy.findByText('Fail spec');
-  });
-```
-
-- Commit again:
-
-```bash
-git add .
-git commit -m "add failing spec"
-git push
-```
 
 - We can upload `screenshots` and `videos` as `artifacts` if specs `fail`:
 
@@ -163,9 +140,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install
-        run: npm install
-      - name: Build
-        run: npm run build
+        run: npm ci
       - name: Tests e2e
         run: npm run test:e2e:ci
 +     - name: Upload screenshots when specs fail
@@ -200,7 +175,7 @@ git push
 
     // Assert
     cy.wait('@loadHotels');
--   cy.findByText('Fail spec');
+-   cy.findByText('Updated hotel three');
 +   cy.findByText('Updated hotel two');
   });
 ```

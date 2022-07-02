@@ -9,7 +9,7 @@
             "cypress",
             "node",
             "@testing-library/cypress",
-            "./suport"
+            "./support"
         ]
     },
     "include": [

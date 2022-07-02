@@ -4,7 +4,6 @@ declare namespace Cypress {
     fixture?: string;
     alias?: string;
   }
-
   interface Chainable {
     loadAndVisit(
       visitUrl: string,
