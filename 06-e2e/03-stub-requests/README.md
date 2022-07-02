@@ -14,7 +14,7 @@ npm install
 
 - We will create `hotel-collection` specs:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```javascript
 describe('Hotel collection specs', () => {
@@ -28,7 +28,7 @@ describe('Hotel collection specs', () => {
 
 - Update spec:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 describe('Hotel collection specs', () => {
@@ -61,7 +61,7 @@ describe('Hotel collection specs', () => {
 
 - But in some scenarios, maybe we need to simulate this fetch. How can we simulate, fetching 2 hotels?:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 + import { HotelEntityApi } from '../../src/pods/hotel-collection/api';
@@ -90,8 +90,7 @@ describe('Hotel collection specs', () => {
 +       city: 'Seattle',
 +     },
 +   ] as HotelEntityApi[];
-+   cy.server(); // Start the server to change request behaviour
-+   cy.route('GET', '/api/hotels', hotels);
++   cy.intercept('GET', '/api/hotels', hotels);
 
 +   // Act
 +   cy.visit('/hotel-collection');
@@ -103,7 +102,7 @@ describe('Hotel collection specs', () => {
 
 ```
 
-> [server method](https://docs.cypress.io/api/commands/server.html#Syntax)
+> [intercept method](https://docs.cypress.io/api/commands/intercept.htm)
 > Mock data, 404 responses, etc
 
 - This is a common task that we will have to do, so cypress provide the `fixtures` approach:
@@ -135,7 +134,7 @@ describe('Hotel collection specs', () => {
 
 - Update spec:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
 - import { HotelEntityApi } from '../../src/pods/hotel-collection/api';
@@ -163,9 +162,8 @@ describe('Hotel collection specs', () => {
 -       city: 'Seattle',
 -     },
 -   ] as HotelEntityApi[];
-    cy.server(); // Start the server to change request behaviour
 +   cy.fixture('hotels').then((hotels) => {
-      cy.route('GET', '/api/hotels', hotels);
+      cy.intercept('GET', '/api/hotels', hotels);
 +   });
 
     // Act
@@ -179,16 +177,15 @@ describe('Hotel collection specs', () => {
 
 - Or a shorted way:
 
-### ./cypress/integration/hotel-collection.spec.ts
+### ./cypress/e2e/hotel-collection.spec.ts
 
 ```diff
   it('should fetch two hotels when visit /hotel-collection url', () => {
     // Arrange
-    cy.server(); // Start the server to change request behaviour
 -   cy.fixture('hotels').then((hotels) => {
--     cy.route('GET', '/api/hotels', hotels);
+-     cy.intercept('GET', '/api/hotels', hotels);
 -   });
-+   cy.route('GET', '/api/hotels', 'fixture:hotels');
++   cy.intercept('GET', '/api/hotels', { fixture: 'hotels.json' });
 
     // Act
     cy.visit('/hotel-collection');
